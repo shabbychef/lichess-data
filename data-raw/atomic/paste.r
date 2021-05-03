@@ -78,9 +78,9 @@ readone <- function(apath) {
 																			 l8_drook = col_double(),
 																			 l8_dqueen = col_double(),
 																			 .default = col_character())) 
-	tot_rows <- tot_rows + nrow(resu)
+	tot_rows <<- tot_rows + nrow(resu)
 	resu <- resu %>%
-    filter(termination=='Normal' ,
+    filter(termination %in% c('Normal','Time forfeit'),
            nzchar(move1) > 0,
            move1 != 'NA',
            !is.na(white_elo),
@@ -114,7 +114,7 @@ output <- output %>%
 									 black_gamenum=gamenum),
 						by=c('site','black')) 
 
-print(paste0("total rows: ",tot_rows,"\n"))
+cat(paste0("total rows: ",tot_rows,"\n"))
 
 if (grepl('.fst$',opt$outfile)) {
 	output %>%
