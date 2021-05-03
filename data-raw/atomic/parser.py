@@ -29,6 +29,7 @@ def pgn_gen(pgn):
     rpat = compile("https?://lichess.org/")
     yield ('site','datetime','termination','outcome','nply',
             'move1','move2','move3','move4','move5','move6','move7','move8','move9','move10',
+            'moves',
             'white','black',
             'white_elo','black_elo','white_elo_diff','black_elo_diff',
             'l1_dpawn','l1_dknight','l1_dbishop','l1_drook','l1_dqueen',
@@ -47,13 +48,20 @@ def pgn_gen(pgn):
             # I believe you get here when you reach end of file. return then
             break
         term = rhed['Termination']
-        if term=='Normal':
-            moves = []
-            for iii in range(10):
-                try:
-                    gam = gam.next()
-                    moves.append(str(gam.move))
-                except:
+        # we have Normal, Time forfeit, Abandoned
+        if term != 'Abandoned':
+            try:
+                ending = gam.end()
+                endb = ending.board()
+                moves = [str(x) for x in endb.move_stack]
+            except:
+                moves = []
+            nply = len(moves)
+            movel = ":".join(moves)
+            if (len(moves) > 10):
+                moves = moves[0:10]
+            else:
+                for iii in range(len(moves),10):
                     moves.append('')
             try:
                 wdiff = int(rhed['WhiteRatingDiff'])
@@ -61,12 +69,6 @@ def pgn_gen(pgn):
             except:
                 wdiff = float('nan')
                 bdiff = float('nan')
-            try:
-                ending = gam.end()
-                endb = ending.board()
-                nply = endb.ply()
-            except:
-                nply = float('nan')
             try:
                 lmov = endb.pop()
                 d_l1 = dpieces(endb)
@@ -92,6 +94,7 @@ def pgn_gen(pgn):
             except:
                 d_l8 = mt_dp
         else:
+            movel = ''
             # could also be 'Time forfeit', 'Abandonded'
             moves = ['','','','','','','','','','']
             wdiff = float('nan')
@@ -136,6 +139,7 @@ def pgn_gen(pgn):
         site = sub(rpat,'',rhed['Site']) 
         yield (site,datetime,term,outcome,nply,
                 *moves,
+                movel,
                 white,black,welo,belo,wdiff,bdiff,
                 *d_l1,*d_l2,*d_l4,*d_l8)
     pgn.close()

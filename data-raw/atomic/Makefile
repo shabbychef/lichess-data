@@ -13,6 +13,7 @@ ALL_PGN_BZ2 		 = $(foreach dat,$(DATES),lichess_db_atomic_rated_$(dat).pgn.bz2)
 ALL_CSV 				 = $(patsubst %.pgn.bz2,%.csv,$(ALL_PGN_BZ2))
 
 UNIFIED_CSV 		 = all_atomic.csv
+UNIFIED_FST 		 = all_atomic.fst
 
 atomic : $(ALL_PGN_BZ2) ## download atomic files
 all_csv : $(ALL_CSV) ## process all csv files
@@ -31,11 +32,13 @@ $(ALL_PGN_BZ2) : %.pgn.bz2 :
 $(ALL_CSV) : %.csv : parser.py %.pgn
 	$(DO_TIME) python3.9 $^ $@ 2>./.$*.log
 
-
 $(UNIFIED_CSV) : paste.r $(ALL_CSV)
 	$(DO_TIME) r $< --outfile=$@ $(ALL_CSV)
 
-unified : $(UNIFIED_CSV)  ## make a single unified csv file
+$(UNIFIED_FST) : paste.r $(ALL_CSV)
+	$(DO_TIME) r $< --outfile=$@ $(ALL_CSV)
+
+unified : $(UNIFIED_FST)  ## make a single unified fst file
 
 #for vim modeline: (do not edit)
 # vim:ts=2:sw=2:tw=79:fdm=marker:fmr=FOLDUP,UNFOLD:cms=#%s:tags=tags;:syn=make:ft=make:ai:si:cin:nu:fo=croqt:cino=p0t0c5(0:

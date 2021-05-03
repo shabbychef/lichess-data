@@ -30,7 +30,8 @@ doc <- "Usage: paste.r [-v] [-O <OUTFILE>] INFILES...
 pastes together a bunch of atomic csv files, rejecting abnormal games, 
 and sorting by datetime.
 
--O OUTFILE --outfile=OUTFILE     Give the outfile as csv [default: all_atomic.csv]
+-O OUTFILE --outfile=OUTFILE     Give the outfile as csv or fst [default: all_atomic.fst]
+                                 output type depends on file extension.
 -v --verbose                     Be more verbose
 -h --help                        show this help text"
 
@@ -40,11 +41,14 @@ suppressMessages({
 	library(readr)
 	library(dplyr)
 	library(tidyr)
+	library(fst)
 	library(magrittr)
 })
 
+tot_rows <<- 0
+
 readone <- function(apath) {
-  readr::read_csv(apath,col_types=cols(site = col_character(),
+  resu <- readr::read_csv(apath,col_types=cols(site = col_character(),
 																			 datetime = col_datetime(format = ""),
 																			 termination = col_character(),
 																			 outcome = col_double(),
@@ -73,7 +77,9 @@ readone <- function(apath) {
 																			 l8_dbishop = col_double(),
 																			 l8_drook = col_double(),
 																			 l8_dqueen = col_double(),
-																			 .default = col_character())) %>%
+																			 .default = col_character())) 
+	tot_rows <- tot_rows + nrow(resu)
+	resu <- resu %>%
     filter(termination=='Normal' ,
            nzchar(move1) > 0,
            move1 != 'NA',
@@ -108,8 +114,15 @@ output <- output %>%
 									 black_gamenum=gamenum),
 						by=c('site','black')) 
 
-output %>%
-	readr::write_csv(opt$outfile)
+print(paste0("total rows: ",tot_rows,"\n"))
+
+if (grepl('.fst$',opt$outfile)) {
+	output %>%
+		fst::write_fst(opt$outfile,compress=100)
+} else {
+	output %>%
+		readr::write_csv(opt$outfile)
+}
 
 #for vim modeline: (do not edit)
 # vim:fdm=marker:fmr=FOLDUP,UNFOLD:cms=#%s:syn=r:ft=r
