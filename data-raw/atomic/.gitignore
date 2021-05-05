@@ -1,5 +1,1 @@
-*.pgn.bz2
-*.pgn
 lichess_db_atomic_rated*.csv
-.*.log
-nohup.out

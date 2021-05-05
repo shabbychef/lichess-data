@@ -1,0 +1,4 @@
+*.pgn.bz2
+*.pgn
+nohup.out
+.*.log
