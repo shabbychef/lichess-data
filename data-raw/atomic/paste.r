@@ -77,6 +77,22 @@ readone <- function(apath) {
 																			 l8_dbishop = col_double(),
 																			 l8_drook = col_double(),
 																			 l8_dqueen = col_double(),
+																			 l1_pp234 = col_double(),
+																			 l2_pp234 = col_double(),
+																			 l4_pp234 = col_double(),
+																			 l8_pp234 = col_double(),
+																			 l1_pp5 = col_double(),
+																			 l2_pp5 = col_double(),
+																			 l4_pp5 = col_double(),
+																			 l8_pp5 = col_double(),
+																			 l1_pp6 = col_double(),
+																			 l2_pp6 = col_double(),
+																			 l4_pp6 = col_double(),
+																			 l8_pp6 = col_double(),
+																			 l1_pp7 = col_double(),
+																			 l2_pp7 = col_double(),
+																			 l4_pp7 = col_double(),
+																			 l8_pp7 = col_double(),
 																			 .default = col_character())) 
 	tot_rows <<- tot_rows + nrow(resu)
 	resu <- resu %>%
