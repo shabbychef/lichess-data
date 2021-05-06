@@ -24,97 +24,97 @@ def passed_pawn_count(board):
     FRONT_A4 = FRONT_A5 | chess.BB_A5 | chess.BB_B5
     FRONT_A3 = FRONT_A4 | chess.BB_A4 | chess.BB_B4
     FRONT_A2 = FRONT_A3 | chess.BB_A3 | chess.BB_B3
-
+    #
     FRONT_B6 = chess.SquareSet(chess.BB_A7 | chess.BB_B7 | chess.BB_C7)
     FRONT_B5 = FRONT_B6 | chess.BB_A6 | chess.BB_B6 | chess.BB_C6
     FRONT_B4 = FRONT_B5 | chess.BB_A5 | chess.BB_B5 | chess.BB_C5
     FRONT_B3 = FRONT_B4 | chess.BB_A4 | chess.BB_B4 | chess.BB_C4
     FRONT_B2 = FRONT_B3 | chess.BB_A3 | chess.BB_B3 | chess.BB_C3
-
+    #
     FRONT_C6 = chess.SquareSet(chess.BB_B7 | chess.BB_C7 | chess.BB_D7)
     FRONT_C5 = FRONT_C6 | chess.BB_B6 | chess.BB_C6 | chess.BB_D6
     FRONT_C4 = FRONT_C5 | chess.BB_B5 | chess.BB_C5 | chess.BB_D5
     FRONT_C3 = FRONT_C4 | chess.BB_B4 | chess.BB_C4 | chess.BB_D4
     FRONT_C2 = FRONT_C3 | chess.BB_B3 | chess.BB_C3 | chess.BB_D3
-
+    #
     FRONT_D6 = chess.SquareSet(chess.BB_C7 | chess.BB_D7 | chess.BB_E7)
     FRONT_D5 = FRONT_D6 | chess.BB_C6 | chess.BB_D6 | chess.BB_E6
     FRONT_D4 = FRONT_D5 | chess.BB_C5 | chess.BB_D5 | chess.BB_E5
     FRONT_D3 = FRONT_D4 | chess.BB_C4 | chess.BB_D4 | chess.BB_E4
     FRONT_D2 = FRONT_D3 | chess.BB_C3 | chess.BB_D3 | chess.BB_E3
-
+    #
     FRONT_E6 = chess.SquareSet(chess.BB_D7 | chess.BB_E7 | chess.BB_F7)
     FRONT_E5 = FRONT_E6 | chess.BB_D6 | chess.BB_E6 | chess.BB_F6
     FRONT_E4 = FRONT_E5 | chess.BB_D5 | chess.BB_E5 | chess.BB_F5
     FRONT_E3 = FRONT_E4 | chess.BB_D4 | chess.BB_E4 | chess.BB_F4
     FRONT_E2 = FRONT_E3 | chess.BB_D3 | chess.BB_E3 | chess.BB_F3
-
+    #
     FRONT_F6 = chess.SquareSet(chess.BB_E7 | chess.BB_F7 | chess.BB_G7)
     FRONT_F5 = FRONT_F6 | chess.BB_E6 | chess.BB_F6 | chess.BB_G6
     FRONT_F4 = FRONT_F5 | chess.BB_E5 | chess.BB_F5 | chess.BB_G5
     FRONT_F3 = FRONT_F4 | chess.BB_E4 | chess.BB_F4 | chess.BB_G4
     FRONT_F2 = FRONT_F3 | chess.BB_E3 | chess.BB_F3 | chess.BB_G3
-
+    #
     FRONT_G6 = chess.SquareSet(chess.BB_F7 | chess.BB_G7 | chess.BB_H7)
     FRONT_G5 = FRONT_G6 | chess.BB_F6 | chess.BB_G6 | chess.BB_H6
     FRONT_G4 = FRONT_G5 | chess.BB_F5 | chess.BB_G5 | chess.BB_H5
     FRONT_G3 = FRONT_G4 | chess.BB_F4 | chess.BB_G4 | chess.BB_H4
     FRONT_G2 = FRONT_G3 | chess.BB_F3 | chess.BB_G3 | chess.BB_H3
-
+    #
     FRONT_H6 = chess.SquareSet(chess.BB_G7 | chess.BB_H7)
     FRONT_H5 = FRONT_H6 | chess.BB_G6 | chess.BB_H6
     FRONT_H4 = FRONT_H5 | chess.BB_G5 | chess.BB_H5
     FRONT_H3 = FRONT_H4 | chess.BB_G4 | chess.BB_H4
     FRONT_H2 = FRONT_H3 | chess.BB_G3 | chess.BB_H3
-
+    #
     BACK_H7 = FRONT_H2.mirror()
     BACK_H6 = FRONT_H3.mirror()
     BACK_H5 = FRONT_H4.mirror()
     BACK_H4 = FRONT_H5.mirror()
     BACK_H3 = FRONT_H6.mirror()
-
+    #
     BACK_G7 = FRONT_G2.mirror()
     BACK_G6 = FRONT_G3.mirror()
     BACK_G5 = FRONT_G4.mirror()
     BACK_G4 = FRONT_G5.mirror()
     BACK_G3 = FRONT_G6.mirror()
-
+    #
     BACK_F7 = FRONT_F2.mirror()
     BACK_F6 = FRONT_F3.mirror()
     BACK_F5 = FRONT_F4.mirror()
     BACK_F4 = FRONT_F5.mirror()
     BACK_F3 = FRONT_F6.mirror()
-
+    #
     BACK_E7 = FRONT_E2.mirror()
     BACK_E6 = FRONT_E3.mirror()
     BACK_E5 = FRONT_E4.mirror()
     BACK_E4 = FRONT_E5.mirror()
     BACK_E3 = FRONT_E6.mirror()
-
+    #
     BACK_D7 = FRONT_D2.mirror()
     BACK_D6 = FRONT_D3.mirror()
     BACK_D5 = FRONT_D4.mirror()
     BACK_D4 = FRONT_D5.mirror()
     BACK_D3 = FRONT_D6.mirror()
-
+    #
     BACK_C7 = FRONT_C2.mirror()
     BACK_C6 = FRONT_C3.mirror()
     BACK_C5 = FRONT_C4.mirror()
     BACK_C4 = FRONT_C5.mirror()
     BACK_C3 = FRONT_C6.mirror()
-
+    #
     BACK_B7 = FRONT_B2.mirror()
     BACK_B6 = FRONT_B3.mirror()
     BACK_B5 = FRONT_B4.mirror()
     BACK_B4 = FRONT_B5.mirror()
     BACK_B3 = FRONT_B6.mirror()
-
+    #
     BACK_A7 = FRONT_A2.mirror()
     BACK_A6 = FRONT_A3.mirror()
     BACK_A5 = FRONT_A4.mirror()
     BACK_A4 = FRONT_A5.mirror()
     BACK_A3 = FRONT_A6.mirror()
-
+    #
     PASSER_WHITE_R2 = [ (chess.BB_A2,FRONT_A2) , (chess.BB_B2,FRONT_B2) , (chess.BB_C2,FRONT_C2) , (chess.BB_D2,FRONT_D2) , 
             (chess.BB_E2,FRONT_E2) , (chess.BB_F2,FRONT_F2) , (chess.BB_G2,FRONT_G2) , (chess.BB_H2,FRONT_H2) , ]
     PASSER_WHITE_R3 = [ (chess.BB_A3,FRONT_A3) , (chess.BB_B3,FRONT_B3) , (chess.BB_C3,FRONT_C3) , (chess.BB_D3,FRONT_D3) , 
@@ -125,9 +125,8 @@ def passed_pawn_count(board):
             (chess.BB_E5,FRONT_E5) , (chess.BB_F5,FRONT_F5) , (chess.BB_G5,FRONT_G5) , (chess.BB_H5,FRONT_H5) , ]
     PASSER_WHITE_R6 = [ (chess.BB_A6,FRONT_A6) , (chess.BB_B6,FRONT_B6) , (chess.BB_C6,FRONT_C6) , (chess.BB_D6,FRONT_D6) , 
             (chess.BB_E6,FRONT_E6) , (chess.BB_F6,FRONT_F6) , (chess.BB_G6,FRONT_G6) , (chess.BB_H6,FRONT_H6) , ]
-
-    PASSER_WHITE_234 = [ *PASSER_WHITE_2, *PASSER_WHITE_3, *PASSER_WHITE_4 ]
-
+    PASSER_WHITE_R234 = [ *PASSER_WHITE_R2, *PASSER_WHITE_R3, *PASSER_WHITE_R4 ]
+    #
     PASSER_BLACK_R7 = [ (chess.BB_A7,BACK_A7) , (chess.BB_B7,BACK_B7) , (chess.BB_C7,BACK_C7) , (chess.BB_D7,BACK_D7) , 
             (chess.BB_E7,BACK_E7) , (chess.BB_F7,BACK_F7) , (chess.BB_G7,BACK_G7) , (chess.BB_H7,BACK_H7) , ]
     PASSER_BLACK_R6 = [ (chess.BB_A6,BACK_A6) , (chess.BB_B6,BACK_B6) , (chess.BB_C6,BACK_C6) , (chess.BB_D6,BACK_D6) , 
@@ -138,9 +137,8 @@ def passed_pawn_count(board):
             (chess.BB_E4,BACK_E4) , (chess.BB_F4,BACK_F4) , (chess.BB_G4,BACK_G4) , (chess.BB_H4,BACK_H4) , ]
     PASSER_BLACK_R3 = [ (chess.BB_A3,BACK_A3) , (chess.BB_B3,BACK_B3) , (chess.BB_C3,BACK_C3) , (chess.BB_D3,BACK_D3) , 
             (chess.BB_E3,BACK_E3) , (chess.BB_F3,BACK_F3) , (chess.BB_G3,BACK_G3) , (chess.BB_H3,BACK_H3) , ]
-
-    PASSER_BLACK_765 = [ *PASSER_WHITE_7, *PASSER_WHITE_6, *PASSER_WHITE_5 ]
-
+    PASSER_BLACK_R765 = [ *PASSER_BLACK_R7, *PASSER_BLACK_R6, *PASSER_BLACK_R5 ]
+    #
     WP = board.pieces(chess.PAWN,chess.WHITE)
     BP = board.pieces(chess.PAWN,chess.BLACK)
     pp_234 = (sum([max(0,len(WP & x[0]) - len(BP & x[1])) for x in PASSER_WHITE_R234]) -
