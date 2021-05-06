@@ -2,3 +2,4 @@
 *.pgn
 nohup.out
 .*.log
+*.fst
