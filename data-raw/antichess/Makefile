@@ -1,21 +1,22 @@
 
-.PHONY : antichess all_csv unified
+.PHONY : download all_csv unified
 
 .PRECIOUS : %.bz2
 
+VARIANT 				 = antichess
 
 ALLMO 			 		 = 01 02 03 04 05 06 07 08 09 10 11 12
 ALLYR 			 		 = 2015 2016 2017 2018 2019 2020
 DATES 			 		 = $(foreach yr,$(ALLYR),$(foreach mo,$(ALLMO),$(yr)-$(mo)))
-DATES 					+= 2021-01 2021-02 2021-03 
+DATES 					+= 2021-01 2021-02 2021-03 2021-04
 
-ALL_PGN_BZ2 		 = $(foreach dat,$(DATES),lichess_db_antichess_rated_$(dat).pgn.bz2)
+ALL_PGN_BZ2 		 = $(foreach dat,$(DATES),lichess_db_$(VARIANT)_rated_$(dat).pgn.bz2)
 ALL_CSV 				 = $(patsubst %.pgn.bz2,%.csv,$(ALL_PGN_BZ2))
 
-UNIFIED_CSV 		 = all_antichess.csv
-UNIFIED_FST 		 = all_antichess.fst
+UNIFIED_CSV 		 = all_$(VARIANT).csv
+UNIFIED_FST 		 = all_$(VARIANT).fst
 
-antichess : $(ALL_PGN_BZ2) ## download antichess files
+download : $(ALL_PGN_BZ2) ## download all variant files
 all_csv : $(ALL_CSV) ## process all csv files
 
 DO_TIME 		?= time
@@ -24,7 +25,7 @@ help :  ## get this help
 	@grep -h -P '^(([^\s]+\s+)*([^\s]+))\s*:.*?##\s*.*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 $(ALL_PGN_BZ2) : %.pgn.bz2 : 
-	wget -O $@ https://database.lichess.org/antichess/$*.pgn.bz2
+	wget -O $@ https://database.lichess.org/$(VARIANT)/$*.pgn.bz2
 
 % : %.bz2
 	bunzip2 -k $<
