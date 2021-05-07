@@ -30,8 +30,12 @@ $(ALL_PGN_BZ2) : %.pgn.bz2 :
 % : %.bz2
 	bunzip2 -k $<
 
-$(ALL_CSV) : %.csv : parser.py %.pgn
-	$(DO_TIME) python3.9 $^ $@ 2>./.$*.log
+# I do not need the intermediate pgn laying around
+# and make is not deleting the intermediates, so do this nonsense
+$(ALL_CSV) : %.csv : parser.py %.pgn.bz2
+	bunzip2 -k $*.pgn.bz2
+	$(DO_TIME) python3.9 $< $*.pgn $@ 2>./.$*.log
+	-rm -f $*.pgn
 
 $(UNIFIED_CSV) : paste.r $(ALL_CSV)
 	$(DO_TIME) r $< --outfile=$@ $(ALL_CSV)
