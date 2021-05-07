@@ -32,7 +32,7 @@ def pgn_gen(pgn):
     nmove = 10
     yield ('site','datetime','termination','outcome','nply',
             *[f"move{i}" for i in range(1,nmove+1)],
-            'moves',
+            #'moves',
             'white','black',
             'white_elo','black_elo','white_elo_diff','black_elo_diff')
     while (pgn):
@@ -108,7 +108,7 @@ def pgn_gen(pgn):
         site = sub(rpat,'',rhed['Site']) 
         yield (site,datetime,term,outcome,nply,
                 *moves,
-                movel,
+                #movel,
                 white,black,welo,belo,wdiff,bdiff)
     pgn.close()
     return
