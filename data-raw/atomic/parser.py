@@ -10,6 +10,70 @@ Usage:
 
 from docopt import docopt
 
+# these are all abandoned
+def fibonacci_hash(x,A=0.6180339887,m=2**31):
+    """Fibonacci hash"""
+    from math import floor
+    return floor(m * ((x*A) % 1))
+
+def fibonacci_strhash(astring,A=0.6180339887,m=2**31):
+    from math import floor
+    lowy = ord('0')
+    return floor(m * (sum([(ord(c)-lowy)*A for c in astring]) % 1))
+
+def seekto(game,at_ply):
+    """
+    take a pgn of a game, then play to just after at_ply,
+    returning the board
+    """
+    myb = game.end().board()
+    ms = myb.move_stack
+    # no easy way to do this.
+    subs = ms[0:at_ply]
+    newb = chess.variant.AtomicBoard()
+    for move in subs:
+        newb.push(move)
+    return newb
+
+def fibu_str(astring,A=0.61803399,m=2**31):
+    from math import floor
+    from functools import reduce
+    lowy = ord('0')
+    fbits = [(ord(c)-lowy)*A for c in astring]
+    return (reduce(lambda a, b: (a + m * b) % 1,fbits))
+
+def pos_seek(game,rando,min_rat=0,max_rat=1,min_ply=2,max_ply=None):
+    """
+    seek to a position
+
+    let n be the number of ply in the game. 
+    let l = max(min_rat*n,min_ply,0)
+    let u = min(max_rat*n,max_ply,n+1)
+    
+    computes floor(l + r * (u-l)) and seeks to that position, returning a board.
+
+    if max_ply is given as None, it is ignored. 
+    you can set max_rat > 1 to possibly get
+    the ending position (which seems uninteresting to me.)
+    """
+    from math import floor
+    from chess import variant
+    myb = game.end().board()
+    ms = myb.move_stack
+    nnn = len(ms)
+    lll = max(max(nnn*min_rat,min_ply),0)
+    uuu = min(nnn*max_rat,nnn+1)
+    if max_ply is not None:
+        uuu = min(uuu,max_ply)
+    # just in case
+    uuu = max(uuu,lll)
+    at_ply = floor(lll + rando * (uuu-lll))
+    subs = ms[0:at_ply]
+    newb = variant.AtomicBoard()
+    for move in subs:
+        newb.push(move)
+    return (newb,at_ply)
+
 def passed_pawn_count(board):
     """
     compute symmetric passed pawn count as a tuple.
@@ -150,6 +214,18 @@ def passed_pawn_count(board):
     pp_7 = (len(WP & chess.BB_RANK_7) - len(BP & chess.BB_RANK_2))
     return (pp_234,pp_5,pp_6,pp_7)
 
+def dpawn_rank(board):
+    """
+    pawn rank count difference of pawn rank
+    """
+    import chess
+    WP = board.pieces(chess.PAWN,chess.WHITE)
+    BP = board.pieces(chess.PAWN,chess.BLACK)
+    dPAWN2 = (len(WP & chess.BB_RANK_2) - len(BP & chess.BB_RANK_7))
+    dPAWN3 = (len(WP & chess.BB_RANK_3) - len(BP & chess.BB_RANK_6))
+    dPAWN4 = (len(WP & chess.BB_RANK_4) - len(BP & chess.BB_RANK_5))
+    return (dPAWN2,dPAWN3,dPAWN4)
+
 def dpieces(endb):
     """
     return tuple of differences in piece counts
@@ -161,34 +237,41 @@ def dpieces(endb):
     dROOK = len(endb.pieces(chess.ROOK,chess.WHITE)) - len(endb.pieces(chess.ROOK,chess.BLACK))
     dQUEEN = len(endb.pieces(chess.QUEEN,chess.WHITE)) - len(endb.pieces(chess.QUEEN,chess.BLACK))
     pp_count = passed_pawn_count(endb)
-    return (dPAWN,dKNIGHT,dBISHOP,dROOK,dQUEEN,*pp_count)
+    pawn_rank = dpawn_rank(endb)
+    return (dPAWN,dKNIGHT,dBISHOP,dROOK,dQUEEN,*pp_count,*pawn_rank)
 
 def pgn_gen(pgn):
+    from math import floor
     import chess.pgn
     from re import sub,compile
     rpat = compile("https?://lichess.org/")
     nmove = 10
-    yield ('site','datetime','termination','outcome','nply',
+    suffixes = ['dpawn','dknight','dbishop','drook','dqueen',
+            'pp234','pp5','pp6','pp7',
+            'dpawnr2','dpawnr3','dpawnr4']
+    prefixes = ['l1','l2','l4','l8','rr','t1','t2','t3']
+    # have to be careful about the ordering of that double zip...
+    yield ('site','datetime','time_control','termination','outcome','nply',
             *[f"move{i}" for i in range(1,nmove+1)],
             'moves',
             'white','black',
             'white_elo','black_elo','white_elo_diff','black_elo_diff',
-            'l1_dpawn','l1_dknight','l1_dbishop','l1_drook','l1_dqueen','l1_pp234','l1_pp5','l1_pp6','l1_pp7',
-            'l2_dpawn','l2_dknight','l2_dbishop','l2_drook','l2_dqueen','l2_pp234','l2_pp5','l2_pp6','l2_pp7',
-            'l4_dpawn','l4_dknight','l4_dbishop','l4_drook','l4_dqueen','l4_pp234','l4_pp5','l4_pp6','l4_pp7',
-            'l8_dpawn','l8_dknight','l8_dbishop','l8_drook','l8_dqueen','l8_pp234','l8_pp5','l8_pp6','l8_pp7')
+            *[ f"{bit}_ply" for bit in ['rr','t1','t2','t3'] ],
+            *[ f"{pre}_{suf}" for pre in prefixes for suf in suffixes])
     # empty
-    mt_dp = tuple(float('nan') for i in range(9))
+    mt_dp = tuple(float('nan') for i in range(len(suffixes)))
     while (pgn):
         gam = chess.pgn.read_game(pgn)
         try:
             rhed = gam.headers
         except:
-            # cannot do anything without the headers? fake them!
-            #rhed = {'Termination':'ERROR','Result':'--','Site':"https://lichess.org/"}
-            # I believe you get here when you reach end of file. return then
+            # I believe you get here when you reach end of file. break and return then
             break
         term = rhed['Termination']
+        tc = rhed['TimeControl']
+        # an ID for the game
+        site = sub(rpat,'',rhed['Site']) 
+        # now use this to seek to random, first 1/3, middle 1/3, late 1/3 positions.
         # we have Normal, Time forfeit, Abandoned
         if term != 'Abandoned':
             try:
@@ -234,6 +317,21 @@ def pgn_gen(pgn):
                 d_l8 = dpieces(endb)
             except:
                 d_l8 = mt_dp
+            # pseudo random locations
+            randbit = fibu_str(site)
+            (rr_board,rr_ply) = pos_seek(gam,randbit,min_rat=0,max_rat=1,min_ply=2)
+            d_rr = dpieces(rr_board)
+            # squeeze more randomness out of randbit? seems dangerous..
+            m = 2**31
+            rbit_t1 = ((floor(m * randbit) << 4) / m) % 1
+            (t1_board,t1_ply) = pos_seek(gam,rbit_t1,min_rat=0,max_rat=0.33333,min_ply=2)
+            d_t1 = dpieces(t1_board)
+            rbit_t2 = ((floor(m * randbit) << 8) / m) % 1
+            (t2_board,t2_ply) = pos_seek(gam,rbit_t2,min_rat=0.33333,max_rat=0.66667,min_ply=2)
+            d_t2 = dpieces(t2_board)
+            rbit_t3 = ((floor(m * randbit) << 12) / m) % 1
+            (t3_board,t3_ply) = pos_seek(gam,rbit_t3,min_rat=0.66667,max_rat=1.00000,min_ply=2)
+            d_t3 = dpieces(t3_board)
         else:
             movel = ''
             # could also be 'Time forfeit', 'Abandoned'
@@ -241,10 +339,18 @@ def pgn_gen(pgn):
             wdiff = float('nan')
             bdiff = float('nan')
             nply = float('nan')
+            rr_ply = 0
+            t1_ply = 0
+            t2_ply = 0
+            t3_ply = 0
             d_l1 = mt_dp
             d_l2 = mt_dp
             d_l4 = mt_dp
             d_l8 = mt_dp
+            d_rr = mt_dp
+            d_t1 = mt_dp
+            d_t2 = mt_dp
+            d_t3 = mt_dp
         # outcome from white's pov, as a number:
         if rhed['Result'] == '1-0':
             outcome = 1.0
@@ -276,13 +382,13 @@ def pgn_gen(pgn):
             datetime = f"{dat}T{rhed['UTCTime']}Z"
         except:
             datetime = ''
-        # an ID for the game
-        site = sub(rpat,'',rhed['Site']) 
-        yield (site,datetime,term,outcome,nply,
+        yield (site,datetime,tc,term,outcome,nply,
                 *moves,
                 movel,
                 white,black,welo,belo,wdiff,bdiff,
-                *d_l1,*d_l2,*d_l4,*d_l8)
+                rr_ply,t1_ply,t2_ply,t3_ply,
+                *d_l1,*d_l2,*d_l4,*d_l8,
+                *d_rr,*d_t1,*d_t2,*d_t3)
     pgn.close()
     return
 
