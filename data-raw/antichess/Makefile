@@ -8,7 +8,7 @@ VARIANT 				 = antichess
 ALLMO 			 		 = 01 02 03 04 05 06 07 08 09 10 11 12
 ALLYR 			 		 = 2015 2016 2017 2018 2019 2020
 DATES 			 		 = $(foreach yr,$(ALLYR),$(foreach mo,$(ALLMO),$(yr)-$(mo)))
-DATES 					+= 2021-01 2021-02 2021-03 2021-04
+DATES 					+= 2021-01 2021-02 2021-03 2021-04 2021-05 2021-06
 # goes back a little further
 DATES 					+= 2014-12
 
