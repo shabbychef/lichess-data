@@ -50,14 +50,22 @@ tot_rows <<- 0
 readone <- function(apath) {
   resu <- readr::read_csv(apath,col_types=cols(site = col_character(),
 																			 datetime = col_datetime(format = ""),
+																			 time_control = col_character(),
 																			 termination = col_character(),
-																			 outcome = col_double(),
-																			 nply = col_double(),
-																			 white_elo = col_double(),
-																			 black_elo = col_double(),
-																			 white_elo_diff = col_double(),
-																			 black_elo_diff = col_double(),
-																			 .default = col_character())) 
+																			 move1 = col_character(),
+																			 move2 = col_character(),
+																			 move3 = col_character(),
+																			 move4 = col_character(),
+																			 move5 = col_character(),
+																			 move6 = col_character(),
+																			 move7 = col_character(),
+																			 move8 = col_character(),
+																			 move9 = col_character(),
+																			 move10 = col_character(),
+																			 moves = col_character(),
+																			 white = col_character(),
+																			 black = col_character(),
+																			 .default = col_double())) 
 	tot_rows <<- tot_rows + nrow(resu)
 	resu <- resu %>%
     filter(termination %in% c('Normal','Time forfeit'),
@@ -72,29 +80,42 @@ output <- lapply(opt$INFILES,readone) %>%
   bind_rows() %>%
 	arrange(datetime)
 
+cat(paste0("total rows: ",tot_rows,"\n"))
+cat(paste0("Normal and time forfeit rows: ",nrow(output),"\n"))
+
 playnum <- bind_rows(output %>% 
-										 rename(pid=white) %>%
-										 select(site,pid,datetime),
+										 select(site,white,datetime) %>%
+										 rename(pid=white),
 										 output %>% 
-										 rename(pid=black) %>%
-										 select(site,pid,datetime)) %>%
+										 select(site,black,datetime) %>%
+										 rename(pid=black)) %>%
+	distinct(site,datetime,pid) %>%
 	arrange(datetime,pid) %>%
 	group_by(pid) %>%
 		mutate(gamenum=seq_len(n())) %>%
 	ungroup() %>%
 	select(-datetime)
 
-output <- output %>%
-	left_join(playnum %>% 
-						rename(white=pid,
-									 white_gamenum=gamenum),
-						by=c('site','white')) %>%
-	left_join(playnum %>% 
-						rename(black=pid,
-									 black_gamenum=gamenum),
-						by=c('site','black')) 
+cat(paste0("computing gamenum: #playnum: ",nrow(playnum),"\n"))
 
-cat(paste0("total rows: ",tot_rows,"\n"))
+swhite <- output %>% select(site,white)
+sblack <- output %>% select(site,black)
+
+output <- output %>%
+	bind_cols(swhite %>%
+						left_join(playnum %>% 
+											rename(white=pid,
+														 white_gamenum=gamenum),
+											by=c('site','white')) %>%
+						select(white_gamenum),
+						sblack %>%
+						left_join(playnum %>% 
+											rename(black=pid,
+														 black_gamenum=gamenum),
+											by=c('site','black')) %>%
+						select(black_gamenum))
+rm(swhite,sblack)
+cat(paste0("writing output: ",nrow(output),"\n"))
 
 if (grepl('.fst$',opt$outfile)) {
 	output %>%
