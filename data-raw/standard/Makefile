@@ -1,23 +1,23 @@
 # note that the python processing step is I/O bound, not compute bound.
 # running it in parallel with -j 4 will _not_ speed up total compute time.
 
-VARIANT 				 = antichess
+VARIANT 				 = standard
 VERSION 				 = v1
 
-include ../common_Makefile
-
-ALLYR 			 		 = 2015 2016 2017 2018 2019 2020 2021 2022 2023
+# ALLYR 			 		 = 2013 2014
+ALLYR 			 		 = 2013 
 # goes back a little further
-DATES 					 = 2014-12
-DATES 			 		+= $(foreach yr,$(ALLYR),$(foreach mo,$(ALLMO),$(yr)-$(mo)))
-DATES 					+= $(CURYR_DATES)
+DATES 			 		 = $(foreach yr,$(ALLYR),$(foreach mo,$(ALLMO),$(yr)-$(mo)))
+ALLMO 			 		 = 01 02 03 04 05 06 07 08 09 10 11 12
+CURYR_DATES 		 = $(foreach mo,01 02 03 04 05 06 07 08 09 10,2024-$(mo))
+# DATES 					+= $(CURYR_DATES)
 
-include ../common_Makefile
-
-ALL_PGN_BZ2 		 = $(foreach dat,$(DATES),lichess_db_$(VARIANT)_rated_$(dat).pgn.bz2)
 ALL_PGN_ZST 		 = $(foreach dat,$(DATES),lichess_db_$(VARIANT)_rated_$(dat).pgn.zst)
 ALL_CSV 				 = $(patsubst %.pgn.zst,%.csv,$(ALL_PGN_ZST))
 FIN_CSV 				 = $(patsubst lichess_db_$(VARIANT)_rated_%,processed_$(VARIANT)_%,$(ALL_CSV))
+
+# needs to be after. sigh.
+include ../common_Makefile
 
 $(FIN_CSV) : processed_$(VARIANT)_% : attach_gamenum.r lichess_db_$(VARIANT)_rated_% 
 	$(DO_TIME) $(LITTLER) $(LITTLER_FLAGS) $^ $@
