@@ -11,84 +11,16 @@ Usage:
 
 """
 
+from parsing import fibu_str, pos_seek, dpieces
+
+import chess
+from chess import variant, pgn
+from re import sub,compile
+
 from docopt import docopt
-
-def seekto(game,at_ply):
-    """
-    take a pgn of a game, then play to just after at_ply,
-    returning the board
-    """
-    myb = game.end().board()
-    ms = myb.move_stack
-    # no easy way to do this.
-    subs = ms[0:at_ply]
-    #newb = chess.variant.AtomicBoard()
-    newb = chess.variant.AntichessBoard()
-    for move in subs:
-        newb.push(move)
-    return newb
-
-def fibu_str(astring,A=0.61803399,m=2**31):
-    from math import floor
-    from functools import reduce
-    lowy = ord('0')
-    fbits = [(ord(c)-lowy)*A for c in astring]
-    return (reduce(lambda a, b: (a + m * b) % 1,fbits))
-
-def pos_seek(game,rando,min_rat=0,max_rat=1,min_ply=2,max_ply=None):
-    """
-    seek to a position
-
-    let n be the number of ply in the game. 
-    let l = max(min_rat*n,min_ply,0)
-    let u = min(max_rat*n,max_ply,n+1)
-    
-    computes floor(l + r * (u-l)) and seeks to that position, returning a board.
-
-    if max_ply is given as None, it is ignored. 
-    you can set max_rat > 1 to possibly get
-    the ending position (which seems uninteresting to me.)
-    """
-    from math import floor
-    from chess import variant
-    myb = game.end().board()
-    ms = myb.move_stack
-    nnn = len(ms)
-    lll = max(max(nnn*min_rat,min_ply),0)
-    uuu = min(nnn*max_rat,nnn+1)
-    if max_ply is not None:
-        uuu = min(uuu,max_ply)
-    # just in case
-    uuu = max(uuu,lll)
-    at_ply = floor(lll + rando * (uuu-lll))
-    subs = ms[0:at_ply]
-    #newb = variant.AtomicBoard()
-    newb = variant.AntichessBoard()
-    for move in subs:
-        newb.push(move)
-    return (newb,at_ply)
-
-
-def dpieces(endb, include_king=False):
-    """
-    return tuple of differences in piece counts
-    """
-    import chess
-    dPAWN = len(endb.pieces(chess.PAWN,chess.WHITE)) - len(endb.pieces(chess.PAWN,chess.BLACK))
-    dKNIGHT = len(endb.pieces(chess.KNIGHT,chess.WHITE)) - len(endb.pieces(chess.KNIGHT,chess.BLACK))
-    dBISHOP = len(endb.pieces(chess.BISHOP,chess.WHITE)) - len(endb.pieces(chess.BISHOP,chess.BLACK))
-    dROOK = len(endb.pieces(chess.ROOK,chess.WHITE)) - len(endb.pieces(chess.ROOK,chess.BLACK))
-    dQUEEN = len(endb.pieces(chess.QUEEN,chess.WHITE)) - len(endb.pieces(chess.QUEEN,chess.BLACK))
-    if include_king:
-        dKING = len(endb.pieces(chess.KING,chess.WHITE)) - len(endb.pieces(chess.KING,chess.BLACK))
-        return (dPAWN,dKNIGHT,dBISHOP,dROOK,dQUEEN,dKING)
-    else:
-        return (dPAWN,dKNIGHT,dBISHOP,dROOK,dQUEEN)
+from math import floor
 
 def pgn_gen(pgn):
-    from math import floor
-    import chess.pgn
-    from re import sub,compile
     rpat = compile("https?://lichess.org/")
     nmove = 10
     suffixes = ['dpawn','dknight','dbishop','drook','dqueen',] # 'dking']
@@ -104,7 +36,11 @@ def pgn_gen(pgn):
     # empty
     mt_dp = tuple(float('nan') for i in range(len(suffixes)))
     while (pgn):
-        gam = chess.pgn.read_game(pgn)
+        try:
+            gam = chess.pgn.read_game(pgn)
+        except Exception as err:
+            print(f"{err=}")
+            continue
         try:
             rhed = gam.headers
         except:
@@ -132,7 +68,8 @@ def pgn_gen(pgn):
             try:
                 wdiff = int(rhed['WhiteRatingDiff'])
                 bdiff = int(rhed['BlackRatingDiff'])
-            except:
+            except Exception as err:
+                print(f"no ratings? {err=}")
                 wdiff = float('nan')
                 bdiff = float('nan')
             try:
@@ -141,20 +78,24 @@ def pgn_gen(pgn):
             except:
                 d_l1 = mt_dp
             # pseudo random locations
-            randbit = fibu_str(site)
-            (rr_board,rr_ply) = pos_seek(gam,randbit,min_rat=0,max_rat=1,min_ply=2)
-            d_rr = dpieces(rr_board)
-            # squeeze more randomness out of randbit? seems dangerous..
-            m = 2**31
-            rbit_t1 = ((floor(m * randbit) << 4) / m) % 1
-            (t1_board,t1_ply) = pos_seek(gam,rbit_t1,min_rat=0,max_rat=0.33333,min_ply=2)
-            d_t1 = dpieces(t1_board)
-            rbit_t2 = ((floor(m * randbit) << 8) / m) % 1
-            (t2_board,t2_ply) = pos_seek(gam,rbit_t2,min_rat=0.33333,max_rat=0.66667,min_ply=2)
-            d_t2 = dpieces(t2_board)
-            rbit_t3 = ((floor(m * randbit) << 12) / m) % 1
-            (t3_board,t3_ply) = pos_seek(gam,rbit_t3,min_rat=0.66667,max_rat=1.00000,min_ply=2)
-            d_t3 = dpieces(t3_board)
+            try:
+                randbit = fibu_str(site)
+                (rr_board,rr_ply) = pos_seek(gam,randbit,min_rat=0,max_rat=1,min_ply=2)
+                d_rr = dpieces(rr_board)
+                # squeeze more randomness out of randbit? seems dangerous..
+                m = 2**31
+                rbit_t1 = ((floor(m * randbit) << 4) / m) % 1
+                (t1_board,t1_ply) = pos_seek(gam,rbit_t1,min_rat=0,max_rat=0.33333,min_ply=2)
+                d_t1 = dpieces(t1_board)
+                rbit_t2 = ((floor(m * randbit) << 8) / m) % 1
+                (t2_board,t2_ply) = pos_seek(gam,rbit_t2,min_rat=0.33333,max_rat=0.66667,min_ply=2)
+                d_t2 = dpieces(t2_board)
+                rbit_t3 = ((floor(m * randbit) << 12) / m) % 1
+                (t3_board,t3_ply) = pos_seek(gam,rbit_t3,min_rat=0.66667,max_rat=1.00000,min_ply=2)
+                d_t3 = dpieces(t3_board)
+            except Exception as err:
+                print(f"{err=}")
+                continue
         else:
             # movel = ''
             # could also be 'Time forfeit', 'Abandoned'

@@ -11,84 +11,16 @@ Usage:
 
 """
 
+from ..parsing import fib_str, pos_seek, dpieces
+
+import chess
+from chess import variant, pgn
+from re import sub,compile
+
 from docopt import docopt
-
-def seekto(game,at_ply):
-    """
-    take a pgn of a game, then play to just after at_ply,
-    returning the board
-    """
-    myb = game.end().board()
-    ms = myb.move_stack
-    # no easy way to do this.
-    subs = ms[0:at_ply]
-    #newb = chess.variant.AtomicBoard()
-    newb = chess.variant.AntichessBoard()
-    for move in subs:
-        newb.push(move)
-    return newb
-
-def fibu_str(astring,A=0.61803399,m=2**31):
-    from math import floor
-    from functools import reduce
-    lowy = ord('0')
-    fbits = [(ord(c)-lowy)*A for c in astring]
-    return (reduce(lambda a, b: (a + m * b) % 1,fbits))
-
-def pos_seek(game,rando,min_rat=0,max_rat=1,min_ply=2,max_ply=None):
-    """
-    seek to a position
-
-    let n be the number of ply in the game. 
-    let l = max(min_rat*n,min_ply,0)
-    let u = min(max_rat*n,max_ply,n+1)
-    
-    computes floor(l + r * (u-l)) and seeks to that position, returning a board.
-
-    if max_ply is given as None, it is ignored. 
-    you can set max_rat > 1 to possibly get
-    the ending position (which seems uninteresting to me.)
-    """
-    from math import floor
-    from chess import variant
-    myb = game.end().board()
-    ms = myb.move_stack
-    nnn = len(ms)
-    lll = max(max(nnn*min_rat,min_ply),0)
-    uuu = min(nnn*max_rat,nnn+1)
-    if max_ply is not None:
-        uuu = min(uuu,max_ply)
-    # just in case
-    uuu = max(uuu,lll)
-    at_ply = floor(lll + rando * (uuu-lll))
-    subs = ms[0:at_ply]
-    #newb = variant.AtomicBoard()
-    newb = variant.AntichessBoard()
-    for move in subs:
-        newb.push(move)
-    return (newb,at_ply)
-
-
-def dpieces(endb, include_king=False):
-    """
-    return tuple of differences in piece counts
-    """
-    import chess
-    dPAWN = len(endb.pieces(chess.PAWN,chess.WHITE)) - len(endb.pieces(chess.PAWN,chess.BLACK))
-    dKNIGHT = len(endb.pieces(chess.KNIGHT,chess.WHITE)) - len(endb.pieces(chess.KNIGHT,chess.BLACK))
-    dBISHOP = len(endb.pieces(chess.BISHOP,chess.WHITE)) - len(endb.pieces(chess.BISHOP,chess.BLACK))
-    dROOK = len(endb.pieces(chess.ROOK,chess.WHITE)) - len(endb.pieces(chess.ROOK,chess.BLACK))
-    dQUEEN = len(endb.pieces(chess.QUEEN,chess.WHITE)) - len(endb.pieces(chess.QUEEN,chess.BLACK))
-    if include_king:
-        dKING = len(endb.pieces(chess.KING,chess.WHITE)) - len(endb.pieces(chess.KING,chess.BLACK))
-        return (dPAWN,dKNIGHT,dBISHOP,dROOK,dQUEEN,dKING)
-    else:
-        return (dPAWN,dKNIGHT,dBISHOP,dROOK,dQUEEN)
+from math import floor
 
 def pgn_gen(pgn):
-    from math import floor
-    import chess.pgn
-    from re import sub,compile
     rpat = compile("https?://lichess.org/")
     nmove = 10
     suffixes = ['dpawn','dknight','dbishop','drook','dqueen',] # 'dking']
