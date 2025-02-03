@@ -12,6 +12,9 @@ Usage:
 """
 
 from docopt import docopt
+import chess
+from math import floor
+from chess import variant
 
 def seekto(game,at_ply):
     """
@@ -35,7 +38,7 @@ def fibu_str(astring,A=0.61803399,m=2**31):
     fbits = [(ord(c)-lowy)*A for c in astring]
     return (reduce(lambda a, b: (a + m * b) % 1,fbits))
 
-def pos_seek(game,rando,min_rat=0,max_rat=1,min_ply=2,max_ply=None):
+def pos_seek(game,rando,min_rat=0,max_rat=1,min_ply=2,max_ply=None,new_board_func=lambda:variant.AntichessBoard()):
     """
     seek to a position
 
@@ -48,9 +51,12 @@ def pos_seek(game,rando,min_rat=0,max_rat=1,min_ply=2,max_ply=None):
     if max_ply is given as None, it is ignored. 
     you can set max_rat > 1 to possibly get
     the ending position (which seems uninteresting to me.)
+
+    returns:
+        the board
+        the ply number
+        whether the next move would take a piece.
     """
-    from math import floor
-    from chess import variant
     myb = game.end().board()
     ms = myb.move_stack
     nnn = len(ms)
@@ -62,18 +68,25 @@ def pos_seek(game,rando,min_rat=0,max_rat=1,min_ply=2,max_ply=None):
     uuu = max(uuu,lll)
     at_ply = floor(lll + rando * (uuu-lll))
     subs = ms[0:at_ply]
-    #newb = variant.AtomicBoard()
-    newb = variant.AntichessBoard()
+    newb = new_board_func()
     for move in subs:
         newb.push(move)
-    return (newb,at_ply)
+    try:
+        if at_ply >= len(ms):
+            next_take = False
+        else:
+            next_take = newb.is_capture(ms[at_ply])
+    except Exception as err:
+        print(f"CRAP {len(ms)} {at_ply} {ms}")
+        raise
+    return (newb,at_ply,next_take)
 
 
-def dpieces(endb):
+def dpieces_slow(endb):
     """
+    This turns out to be quite slower than the other version...
     return tuple of differences in piece counts
     """
-    import chess
     dPAWN = len(endb.pieces(chess.PAWN,chess.WHITE)) - len(endb.pieces(chess.PAWN,chess.BLACK))
     dKNIGHT = len(endb.pieces(chess.KNIGHT,chess.WHITE)) - len(endb.pieces(chess.KNIGHT,chess.BLACK))
     dBISHOP = len(endb.pieces(chess.BISHOP,chess.WHITE)) - len(endb.pieces(chess.BISHOP,chess.BLACK))
@@ -82,13 +95,26 @@ def dpieces(endb):
     dKING = len(endb.pieces(chess.KING,chess.WHITE)) - len(endb.pieces(chess.KING,chess.BLACK))
     return (dPAWN,dKNIGHT,dBISHOP,dROOK,dQUEEN,dKING)
 
+def dpieces(endb):
+    """
+    return tuple of differences in piece counts
+    """
+    dPAWN = (endb.occupied_co[chess.WHITE] & endb.pawns).bit_count() - (endb.occupied_co[chess.BLACK] & endb.pawns).bit_count()
+    dKNIGHT = (endb.occupied_co[chess.WHITE] & endb.knights).bit_count() - (endb.occupied_co[chess.BLACK] & endb.knights).bit_count()
+    dBISHOP = (endb.occupied_co[chess.WHITE] & endb.bishops).bit_count() - (endb.occupied_co[chess.BLACK] & endb.bishops).bit_count()
+    dROOK = (endb.occupied_co[chess.WHITE] & endb.rooks).bit_count() - (endb.occupied_co[chess.BLACK] & endb.rooks).bit_count()
+    dQUEEN = (endb.occupied_co[chess.WHITE] & endb.queens).bit_count() - (endb.occupied_co[chess.BLACK] & endb.queens).bit_count()
+    dKING = (endb.occupied_co[chess.WHITE] & endb.kings).bit_count() - (endb.occupied_co[chess.BLACK] & endb.kings).bit_count()
+    return (dPAWN,dKNIGHT,dBISHOP,dROOK,dQUEEN,dKING)
+
 def pgn_gen(pgn):
     from math import floor
     import chess.pgn
     from re import sub,compile
     rpat = compile("https?://lichess.org/")
     nmove = 10
-    suffixes = ['dpawn','dknight','dbishop','drook','dqueen','dking']
+    d_piece_suffixes = ['dpawn','dknight','dbishop','drook','dqueen','dking',]
+    suffixes = [*d_piece_suffixes,'next_take',]
     prefixes = ['l1','rr','t1','t2','t3']
     # have to be careful about the ordering of that double zip...
     yield ('site','datetime','time_control','termination','outcome','nply',
@@ -99,7 +125,7 @@ def pgn_gen(pgn):
             *[ f"{bit}_ply" for bit in ['rr','t1','t2','t3'] ],
             *[ f"{pre}_{suf}" for pre in prefixes for suf in suffixes])
     # empty
-    mt_dp = tuple(float('nan') for i in range(len(suffixes)))
+    mt_dp = tuple(float('nan') for i in range(len(d_piece_suffixes)))
     while (pgn):
         gam = chess.pgn.read_game(pgn)
         try:
@@ -136,39 +162,34 @@ def pgn_gen(pgn):
             try:
                 lmov = endb.pop()
                 d_l1 = dpieces(endb)
+                l1_take = endb.is_capture(lmov)
             except:
                 d_l1 = mt_dp
+                l1_take = False
             # pseudo random locations
             randbit = fibu_str(site)
-            (rr_board,rr_ply) = pos_seek(gam,randbit,min_rat=0,max_rat=1,min_ply=2)
+            (rr_board,rr_ply,rr_take) = pos_seek(gam,randbit,min_rat=0,max_rat=1,min_ply=2)
             d_rr = dpieces(rr_board)
             # squeeze more randomness out of randbit? seems dangerous..
             m = 2**31
             rbit_t1 = ((floor(m * randbit) << 4) / m) % 1
-            (t1_board,t1_ply) = pos_seek(gam,rbit_t1,min_rat=0,max_rat=0.33333,min_ply=2)
+            (t1_board,t1_ply,t1_take) = pos_seek(gam,rbit_t1,min_rat=0,max_rat=0.33333,min_ply=2)
             d_t1 = dpieces(t1_board)
             rbit_t2 = ((floor(m * randbit) << 8) / m) % 1
-            (t2_board,t2_ply) = pos_seek(gam,rbit_t2,min_rat=0.33333,max_rat=0.66667,min_ply=2)
+            (t2_board,t2_ply,t2_take) = pos_seek(gam,rbit_t2,min_rat=0.33333,max_rat=0.66667,min_ply=2)
             d_t2 = dpieces(t2_board)
             rbit_t3 = ((floor(m * randbit) << 12) / m) % 1
-            (t3_board,t3_ply) = pos_seek(gam,rbit_t3,min_rat=0.66667,max_rat=1.00000,min_ply=2)
+            (t3_board,t3_ply,t3_take) = pos_seek(gam,rbit_t3,min_rat=0.66667,max_rat=1.00000,min_ply=2)
             d_t3 = dpieces(t3_board)
         else:
             movel = ''
             # could also be 'Time forfeit', 'Abandoned'
             moves = ['' for x in range(nmove)]
-            wdiff = float('nan')
-            bdiff = float('nan')
+            wdiff = bdiff = float('nan')
             nply = float('nan')
-            rr_ply = 0
-            t1_ply = 0
-            t2_ply = 0
-            t3_ply = 0
-            d_l1 = mt_dp
-            d_rr = mt_dp
-            d_t1 = mt_dp
-            d_t2 = mt_dp
-            d_t3 = mt_dp
+            rr_ply = t1_ply = t2_ply = t3_ply = 0
+            d_l1 = d_rr = d_t1 = d_t2 = d_t3 = mt_dp
+            rr_take = l1_take = t1_take = t2_take = t3_take = False
         # outcome from white's pov, as a number:
         if rhed['Result'] == '1-0':
             outcome = 1.0
@@ -201,12 +222,15 @@ def pgn_gen(pgn):
         except:
             datetime = ''
         yield (site,datetime,tc,term,outcome,nply,
-                *moves,
-                movel,
-                white,black,welo,belo,wdiff,bdiff,
-                rr_ply,t1_ply,t2_ply,t3_ply,
-                *d_l1,
-                *d_rr,*d_t1,*d_t2,*d_t3)
+               *moves,
+               movel,
+               white,black,welo,belo,wdiff,bdiff,
+               rr_ply,t1_ply,t2_ply,t3_ply,
+               *d_l1,l1_take,
+               *d_rr,rr_take,
+               *d_t1,t1_take,
+               *d_t2,t2_take,
+               *d_t3,t3_take)
     pgn.close()
     return
 
