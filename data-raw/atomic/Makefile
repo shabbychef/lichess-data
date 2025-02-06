@@ -1,81 +1,38 @@
 
-.PHONY : download all_csv unified pasted
-
-.PRECIOUS : %.bz2, %.zst
-
-PYTHON 				  ?= python3.10
-VERSION 				 = v2
 VARIANT 				 = atomic
+VERSION 				 = v2
 
-ALLMO 			 		 = 01 02 03 04 05 06 07 08 09 10 11 12
-ALLYR 			 		 = 2015 2016 2017 2018 2019 2020 2021 2022 2023
+include ../dates_Makefile
+
+ALLYR 			 		 = 2015 2016 2017 2018 2019 2020 2021 2022 2023 2024
+
+# perfectly aligned with year boundary, no ragged start
 DATES 			 		 = $(foreach yr,$(ALLYR),$(foreach mo,$(ALLMO),$(yr)-$(mo)))
-DATES 					+= $(foreach mo,01 02 03 04 05 06 07 08 09,2024-$(mo))
+DATES 					+= $(CURYR_DATES)
 
-ALL_PGN_BZ2 		 = $(foreach dat,$(DATES),lichess_db_$(VARIANT)_rated_$(dat).pgn.bz2)
 ALL_PGN_ZST 		 = $(foreach dat,$(DATES),lichess_db_$(VARIANT)_rated_$(dat).pgn.zst)
 ALL_CSV 				 = $(patsubst %.pgn.zst,%.csv,$(ALL_PGN_ZST))
+FIN_CSV 				 = $(patsubst lichess_db_$(VARIANT)_rated_%,processed_$(VARIANT)_%,$(ALL_CSV))
 
-UNIFIED_CSV 		 = unified_$(VARIANT)_$(VERSION).csv
-UNIFIED_FST 		 = unified_$(VARIANT)_$(VERSION).fst
-# deprecated
-PASTED_CSV  		 = pasted_$(VARIANT).csv
-PASTED_FST  		 = pasted_$(VARIANT).fst
+# needs to be after. sigh.
+include ../common_Makefile
 
-download : $(ALL_PGN_ZST) ## download all variant files
-all_csv : $(ALL_CSV) ## process all csv files
+$(FIN_CSV) : processed_$(VARIANT)_% : attach_gamenum.r lichess_db_$(VARIANT)_rated_% 
+	$(DO_TIME) $(LITTLER) $(LITTLER_FLAGS) $^ $@
 
-DO_TIME 		?= time
-
-help :  ## get this help
-	@grep -h -P '^(([^\s]+\s+)*([^\s]+))\s*:.*?##\s*.*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
-
-$(ALL_PGN_BZ2) : %.pgn.bz2 : 
-	wget -O $@ https://database.lichess.org/$(VARIANT)/$*.pgn.bz2
-
-$(ALL_PGN_ZST) : %.pgn.zst : 
-	wget -O $@ https://database.lichess.org/$(VARIANT)/$*.pgn.zst
-
-% : %.bz2
-	bunzip2 -k $<
-
-% : %.zst
-	unzstd $<
-
-# I do not need the intermediate pgn laying around
-# and make is not deleting the intermediates, so do this nonsense
-$(ALL_CSV) : %.csv : parser.py %.pgn.zst
-	unzstd -k -f $*.pgn.zst
-	$(DO_TIME) $(PYTHON) $< $*.pgn $@ 2>./.$*.log
-	-rm -f $*.pgn
-
-# have to use linux command line to paste together a bunch of csvs
-$(UNIFIED_CSV) : $(ALL_CSV)
-	$(eval tempf = .gamenum.csv)
-	head -n 1 $< > .$@
-	tail -n +2 $^ | grep -P ',(Normal|Time forfeit),' >> .$@
-	r get_gamenum.r .$@ $(tempf)
-	paste -d ',' .$@ $(tempf) > $@
-	-rm .$@ $(tempf)
-
-unified_csv : $(UNIFIED_CSV)  ## make a single unified csv file
-
-%.csv.gz : %.csv
-	gzip -k $<
+fin_csv : $(FIN_CSV)  ## final csv files
 
 $(UNIFIED_FST) : converter.r $(UNIFIED_CSV)
-	$(DO_TIME) r $^ $@
+	$(DO_TIME) $(LITTLER) $(LITTLER_FLAGS) $^ $@
 
 unified : $(UNIFIED_FST)  ## make a single unified fst file
 
-unigz : $(UNIFIED_CSV).gz  ## gzip a unified csv file
-
 # this is much more straightforward, but eats all memory on my laptop
 $(PASTED_CSV) : paste.r $(ALL_CSV)
-	$(DO_TIME) r $< --outfile=$@ $(ALL_CSV)
+	$(DO_TIME) $(LITTLER) $(LITTLER_FLAGS) $< --outfile=$@ $(ALL_CSV)
 
 $(PASTED_FST) : paste.r $(ALL_CSV)
-	$(DO_TIME) r $< --outfile=$@ $(ALL_CSV)
+	$(DO_TIME) $(LITTLER) $(LITTLER_FLAGS) $< --outfile=$@ $(ALL_CSV)
 
 pasted: $(PASTED_FST)  ## paste together a unified fst file. deprecated
 

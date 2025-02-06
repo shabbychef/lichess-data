@@ -9,9 +9,6 @@ PYTHON 				  ?= python3.10
 LITTLER 				?= r
 LITTLER_FLAGS    = --libpath $(HOME)/.local/R
 
-ALLMO 			 		 = 01 02 03 04 05 06 07 08 09 10 11 12
-CURYR_DATES 		 = $(foreach mo,01 02 03 04 05 06 07 08 09 10,2024-$(mo))
-
 DUCKDB 					?= duckdb
 DUCKDB_ZIP			 = duckdb_cli-linux-amd64.zip
 
@@ -28,6 +25,9 @@ PASTED_FST  		 = pasted_$(VARIANT).fst
 help :  ## get this help
 	@grep -h -P '^(([^\s]+\s+)*([^\s]+))\s*:.*?##\s*.*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+parsing.py : 
+	ln -s ../parsing.py $@
+
 download : $(ALL_PGN_ZST) ## download all variant files
 
 all_csv : $(ALL_CSV) ## process all csv files
@@ -40,7 +40,7 @@ $(ALL_PGN_ZST) : %.pgn.zst :
 
 # I do not need the intermediate pgn laying around
 # and make is not deleting the intermediates, so do this nonsense
-$(ALL_CSV) : %.csv : parser.py %.pgn.zst
+$(ALL_CSV) : %.csv : parser.py parsing.py %.pgn.zst
 	unzstd -k -f $*.pgn.zst
 	$(DO_TIME) $(PYTHON) $< $*.pgn $@ 2>./.$*.log
 	-rm -f $*.pgn

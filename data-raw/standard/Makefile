@@ -4,12 +4,12 @@
 VARIANT 				 = standard
 VERSION 				 = v1
 
-# ALLYR 			 		 = 2013 2014
+include ../dates_Makefile
+
+# only include 2013 for reasons of time and space?
 ALLYR 			 		 = 2013 
 # goes back a little further
 DATES 			 		 = $(foreach yr,$(ALLYR),$(foreach mo,$(ALLMO),$(yr)-$(mo)))
-ALLMO 			 		 = 01 02 03 04 05 06 07 08 09 10 11 12
-CURYR_DATES 		 = $(foreach mo,01 02 03 04 05 06 07 08 09 10,2024-$(mo))
 # DATES 					+= $(CURYR_DATES)
 
 ALL_PGN_ZST 		 = $(foreach dat,$(DATES),lichess_db_$(VARIANT)_rated_$(dat).pgn.zst)

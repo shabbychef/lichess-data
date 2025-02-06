@@ -4,12 +4,13 @@
 VARIANT 				 = chess960
 VERSION 				 = v1
 
-DATES 					 = 2013-08 2013-09 2013-10 2013-11 2013-12
-ALLYR 			 		 = 2014 2015 2016 2017 2018 2019 2020 2021 2022 2023
+include ../dates_Makefile
+
+ALLYR 			 		 = 2014 2015 2016 2017 2018 2019 2020 2021 2022 2023 2024
+
 # goes back a little further
-ALLMO 			 		 = 01 02 03 04 05 06 07 08 09 10 11 12
+DATES 					 = 2013-08 2013-09 2013-10 2013-11 2013-12
 DATES 			 		+= $(foreach yr,$(ALLYR),$(foreach mo,$(ALLMO),$(yr)-$(mo)))
-CURYR_DATES 		 = $(foreach mo,01 02 03 04 05 06 07 08 09 10,2024-$(mo))
 DATES 					+= $(CURYR_DATES)
 
 ALL_PGN_ZST 		 = $(foreach dat,$(DATES),lichess_db_$(VARIANT)_rated_$(dat).pgn.zst)

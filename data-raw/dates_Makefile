@@ -1,0 +1,8 @@
+# bits of makefile common to all the tasks.
+
+ALLMO 			 		 = 01 02 03 04 05 06 07 08 09 10 11 12
+# CURYR_DATES 		 = $(foreach mo,01 02 03 04 05 06 07 08 09 10,2024-$(mo))
+CURYR_DATES 		 = $(foreach mo,01,2025-$(mo))
+
+#for vim modeline: (do not edit)
+# vim:ts=2:sw=2:tw=79:fdm=marker:fmr=FOLDUP,UNFOLD:cms=#%s:tags=tags;:syn=make:ft=make:ai:si:cin:nu:fo=croqt:cino=p0t0c5(0:

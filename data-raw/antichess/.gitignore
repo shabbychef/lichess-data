@@ -2,3 +2,4 @@ lichess_db_antichess_rated*.csv
 lichess_db_antichess_rated*.pgn.zst
 duckdb
 duckdb*.zip
+parsing.py
