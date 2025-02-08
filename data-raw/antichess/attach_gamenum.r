@@ -46,7 +46,8 @@ suppressMessages({
 	library(lubridate)
 })
 
-setwd("/home/spav/github/lichess-data/data-raw/antichess")
+# what bullshit is this?
+# setwd("/home/spav/github/lichess-data/data-raw/antichess")
 file_to_date <- function(filename) {
 	as.Date(gsub('^.+_(20(1[4-9]|2[012345])-(0[1-9]|1[012])).*$','\\1-01',filename),format='%Y-%m-%d')
 }
@@ -100,20 +101,14 @@ allout <- readr::read_csv(opt$INFILE,
 																			 t3_drook = col_double(),
 																			 t3_dqueen = col_double(),
 																			 t3_dking = col_double(),
-
 																			 .default=col_guess()),
 													guess_max=2000)
 
-context <- lapply(readus,
-									function(filename) {
-										readr::read_csv(filename,
-																		col_types=cols_only(site = col_character(),
-																												datetime = col_datetime(format = ""),
-																												white = col_character(),
-																												black = col_character()))
-									}) %>% 
-	bind_rows()
-
+context <- readr::read_csv(readus,
+													 col_types=cols_only(site = col_character(),
+																							 datetime = col_datetime(format = ""),
+																							 white = col_character(),
+																							 black = col_character()))
 
 
 resu <- bind_rows(allout %>% select(site,datetime,white,black),

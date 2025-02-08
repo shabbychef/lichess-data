@@ -47,7 +47,7 @@ suppressMessages({
 })
 
 # what bullshit is this?
-# setwd("/home/spav/github/lichess-data/data-raw/chess960")
+# setwd("/home/spav/github/lichess-data/data-raw/atomic")
 file_to_date <- function(filename) {
 	as.Date(gsub('^.+_(20(1[34-9]|2[012345])-(0[1-9]|1[012])).*$','\\1-01',filename),format='%Y-%m-%d')
 }
@@ -62,6 +62,7 @@ in_range_file <- sapply(present_files,function(filename) {
 })
 readus <- present_files[in_range_file]
 	
+# 2FIX: also has pawn count stuff...
 allout <- readr::read_csv(opt$INFILE,
 												col_types=cols(site = col_character(),
 																			 datetime = col_datetime(format = ""),

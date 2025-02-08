@@ -1,0 +1,11 @@
+services:
+  builder:
+    image: builder:latest
+    build:
+      context: .
+    volumes:
+      - ./:/srv
+    stdin_open: true
+    tty: true
+
+# 
